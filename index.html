@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Zepöör POS & KDS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf8f6',
+                            100: '#fbe8e4',
+                            500: '#d97706',
+                            600: '#b45309',
+                            700: '#92400e',
+                            800: '#78350f',
+                            900: '#451a03',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <div id="custom-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all">
+            <div id="modal-icon" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl"></div>
+            <h3 id="modal-title" class="text-lg font-bold text-center text-stone-900 mb-2"></h3>
+            <p id="modal-message" class="text-sm text-stone-600 text-center mb-6"></p>
+            <div id="modal-actions" class="flex gap-3">
+                <button id="modal-btn-ok" class="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition shadow-md">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-screen" class="fixed inset-0 z-40 bg-stone-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-stone-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30 text-white text-2xl font-bold">
+                    ☕
+                </div>
+                <h1 class="text-2xl font-bold text-stone-900">Cafe Zepöör</h1>
+                <p class="text-sm text-stone-500 mt-1">Sistem Kasir & KDS Multi-Device</p>
+                <div class="inline-block mt-2 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">
+                    <i class="fa-regular fa-clock mr-1"></i> Jam Operasional: 16:00 - 23:00 WIB
+                </div>
+            </div>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">Pilih Peran / Station</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" data-role="Kasir" class="role-btn py-3 px-2 text-center rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-800 font-semibold text-sm transition">
+                            <i class="fa-solid fa-cash-register block text-lg mb-1"></i> Kasir
+                        </button>
+                        <button type="button" data-role="Server" class="role-btn py-3 px-2 text-center rounded-xl border-2 border-stone-200 bg-white text-stone-600 font-semibold text-sm transition hover:border-stone-300">
+                            <i class="fa-solid fa-utensils block text-lg mb-1"></i> Server / KDS
+                        </button>
+                        <button type="button" data-role="Admin" class="role-btn py-3 px-2 text-center rounded-xl border-2 border-stone-200 bg-white text-stone-600 font-semibold text-sm transition hover:border-stone-300">
+                            <i class="fa-solid fa-chart-line block text-lg mb-1"></i> Admin
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">Nama Karyawan / Staff</label>
+                    <input type="text" id="login-name" required placeholder="Contoh: Budi Kasir" class="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">PIN Akses (4 Digit)</label>
+                    <input type="password" id="login-pin" maxlength="4" required placeholder="••••" class="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition text-center tracking-widest text-lg font-bold">
+                    <p class="text-[11px] text-stone-400 mt-1">PIN default: Kasir (1234), Server (5678), Admin (0000)</p>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk Aplikasi
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-amber-500/20">
+                    ☕
+                </div>
+                <div>
+                    <h1 class="font-bold text-stone-900 leading-tight">Cafe Zepöör</h1>
+                    <div class="flex items-center gap-2 text-xs text-stone-500">
+                        <span id="header-role-badge" class="px-2 py-0.5 bg-amber-100 text-amber-800 font-semibold rounded">Kasir</span>
+                        <span class="text-stone-300">•</span>
+                        <span id="header-user-name">Staff</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="sync-indicator" class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="sync-status-text">Sinkronisasi Aktif</span>
+                </div>
+                <button id="logout-btn" class="px-3.5 py-2 rounded-xl text-stone-600 hover:bg-stone-100 transition text-sm font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="hidden sm:inline">Keluar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+        
+        <!-- ================= KASIR STATION ================= -->
+        <div id="station-kasir" class="station-view grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 flex flex-col h-[calc(100vh-8rem)]">
+                <div class="flex gap-2 overflow-x-auto pb-3 mb-3 shrink-0">
+                    <button data-cat="all" class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white shadow-sm transition shrink-0">Semua Menu</button>
+                    <button data-cat="Hot Drinks" class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition shrink-0">Hot Drinks</button>
+                    <button data-cat="Iced Drinks" class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition shrink-0">Iced Drinks</button>
+                    <button data-cat="Snacks" class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition shrink-0">Snacks</button>
+                    <button data-cat="Mains" class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition shrink-0">Mains</button>
+                </div>
+
+                <div class="mb-3 shrink-0">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                        <input type="text" id="menu-search" placeholder="Cari menu Zepöör..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                    </div>
+                </div>
+
+                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto pr-1 flex-1"></div>
+            </div>
+
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+                <div class="p-4 border-b border-stone-100 flex items-center justify-between">
+                    <h2 class="font-bold text-stone-900 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-amber-600"></i> Pesanan Aktif
+                    </h2>
+                    <button id="clear-cart-btn" class="text-xs text-rose-600 hover:text-rose-700 font-semibold">Kosongkan</button>
+                </div>
+
+                <div class="p-4 bg-stone-50 border-b border-stone-100 grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">No. Meja</label>
+                        <select id="order-table" class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="Takeaway">Takeaway / Bawa Pulang</option>
+                            <option value="Meja 1">Meja 1</option>
+                            <option value="Meja 2">Meja 2</option>
+                            <option value="Meja 3">Meja 3</option>
+                            <option value="Meja 4">Meja 4</option>
+                            <option value="Meja 5">Meja 5</option>
+                            <option value="Meja 6">Meja 6</option>
+                            <option value="VIP 1">VIP 1</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">Nama Pemesan</label>
+                        <input type="text" id="order-customer" placeholder="Nama Pelanggan" class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-stone-100">
+                    <div class="text-center py-12 text-stone-400">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 block"></i>
+                        <p class="text-sm">Keranjang masih kosong</p>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-stone-200 bg-stone-50 rounded-b-2xl space-y-3">
+                    <div class="space-y-1.5 text-sm">
+                        <div class="flex justify-between text-stone-600">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-stone-900 text-base pt-1 border-t border-stone-200">
+                            <span>Total</span>
+                            <span id="cart-total" class="text-amber-600">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <button id="send-order-btn" disabled class="w-full py-3 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-amber-600/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Pesanan ke KDS & Dapur
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SERVER / KDS STATION ================= -->
+        <div id="station-server" class="station-view hidden flex flex-col h-[calc(100vh-8rem)]">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-stone-900">Kitchen Display System (KDS) & Server</h2>
+                    <p class="text-xs text-stone-500">Pesanan masuk otomatis diurutkan FIFO (Terlama di atas).</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg" id="kds-active-count">0 Pesanan Aktif</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 overflow-hidden">
+                <div class="bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col h-full overflow-hidden">
+                    <div class="p-3.5 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+                        <h3 class="font-bold text-blue-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-mug-hot"></i> Bar - Minuman
+                        </h3>
+                        <span id="count-minuman" class="px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full text-xs font-bold">0</span>
+                    </div>
+                    <div id="kds-minuman-list" class="flex-1 overflow-y-auto p-3 space-y-3 bg-stone-50/50"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col h-full overflow-hidden">
+                    <div class="p-3.5 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                        <h3 class="font-bold text-amber-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-cookie-bite"></i> Dapur - Snack
+                        </h3>
+                        <span id="count-snack" class="px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full text-xs font-bold">0</span>
+                    </div>
+                    <div id="kds-snack-list" class="flex-1 overflow-y-auto p-3 space-y-3 bg-stone-50/50"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col h-full overflow-hidden">
+                    <div class="p-3.5 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
+                        <h3 class="font-bold text-emerald-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-utensils"></i> Dapur - Makanan (Mains)
+                        </h3>
+                        <span id="count-makanan" class="px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full text-xs font-bold">0</span>
+                    </div>
+                    <div id="kds-makanan-list" class="flex-1 overflow-y-auto p-3 space-y-3 bg-stone-50/50"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ADMIN DASHBOARD ================= -->
+        <div id="station-admin" class="station-view hidden flex flex-col h-[calc(100vh-8rem)] overflow-y-auto space-y-6 pb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-stone-900">Admin Dashboard & Rekap Penjualan</h2>
+                    <p class="text-xs text-stone-500">Statistik real-time keuangan dan produk terlaris Cafe Zepöör.</p>
+                </div>
+                <div class="px-3 py-1.5 bg-amber-50 text-amber-800 font-semibold text-xs rounded-xl border border-amber-200">
+                    <i class="fa-regular fa-clock mr-1"></i> Jam Buka: 16:00 - 23:00 WIB
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">Total Pendapatan Hari Ini</span>
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-rupiah-sign"></i>
+                        </div>
+                    </div>
+                    <div id="admin-total-revenue" class="text-2xl font-bold text-stone-900">Rp 0</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">Total Pesanan Selesai</span>
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-check-to-slot"></i>
+                        </div>
+                    </div>
+                    <div id="admin-total-orders" class="text-2xl font-bold text-stone-900">0</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">Pesanan Aktif (Pending/Proses)</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                    </div>
+                    <div id="admin-active-orders" class="text-2xl font-bold text-stone-900">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-stone-100 flex items-center justify-between">
+                    <h3 class="font-bold text-stone-900">Rekap Penjualan Produk Hari Ini</h3>
+                    <button id="admin-refresh-btn" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition">
+                        <i class="fa-solid fa-rotate mr-1"></i> Refresh Data
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-stone-50 border-b border-stone-200 text-xs font-bold uppercase tracking-wider text-stone-600">
+                                <th class="p-4">Nama Produk</th>
+                                <th class="p-4">Kategori</th>
+                                <th class="p-4 text-center">Total Terjual</th>
+                                <th class="p-4 text-right">Total Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-product-recap-tbody" class="divide-y divide-stone-100 text-sm">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-stone-400">Memuat data rekap produk...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cafe-zepoor-pos-v2';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let ordersUnsubscribe = null;
+        const broadcastChannel = new BroadcastChannel('cafe_zepoor_sync_channel');
+
+        const MENU_DATA = [
+            { id: 'hd1', name: 'Kopi Hitam', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 10000 },
+            { id: 'hd2', name: 'Kopi Susu', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 12000 },
+            { id: 'hd3', name: 'Hot Chocolate', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 17000 },
+            { id: 'hd4', name: 'Hot Lemon Tea', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 12000 },
+            { id: 'hd5', name: 'Hot Tea', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 6000 },
+            { id: 'hd6', name: 'Hot Lychee Tea', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 12000 },
+            { id: 'hd7', name: 'Hot Lime', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 10000 },
+            { id: 'hd8', name: 'Wedang Jahe', category: 'Hot Drinks', kdsGroup: 'Minuman', price: 12000 },
+            { id: 'id1', name: 'Iced Chocolate', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 17000 },
+            { id: 'id2', name: 'Iced Green Tea', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 17000 },
+            { id: 'id3', name: 'Iced Aren Coffee', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 18000 },
+            { id: 'id4', name: 'Iced Caramel Coffee', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 18000 },
+            { id: 'id5', name: 'Iced Coffee Latte', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 17000 },
+            { id: 'id6', name: 'Lemon Spark', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 15000 },
+            { id: 'id7', name: 'Lychee Breeze', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 15000 },
+            { id: 'id8', name: 'Iced Lemon Tea', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 12000 },
+            { id: 'id9', name: 'Iced Lychee Tea', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 15000 },
+            { id: 'id10', name: 'Iced Tea', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 6000 },
+            { id: 'id11', name: 'Iced Lime', category: 'Iced Drinks', kdsGroup: 'Minuman', price: 10000 },
+            { id: 'sn1', name: 'French Fries', category: 'Snacks', kdsGroup: 'Snack', price: 12000 },
+            { id: 'sn2', name: 'Tahu Gibah', category: 'Snacks', kdsGroup: 'Snack', price: 12000 },
+            { id: 'sn3', name: 'Jamur Ngecemes', category: 'Snacks', kdsGroup: 'Snack', price: 15000 },
+            { id: 'sn4', name: 'Risolayo', category: 'Snacks', kdsGroup: 'Snack', price: 17000 },
+            { id: 'sn5', name: 'Cireng Kajur', category: 'Snacks', kdsGroup: 'Snack', price: 15000 },
+            { id: 'sn6', name: 'Lumpia Bung Ayam', category: 'Snacks', kdsGroup: 'Snack', price: 17000 },
+            { id: 'sn7', name: 'Jedang Joreng', category: 'Snacks', kdsGroup: 'Snack', price: 15000 },
+            { id: 'sn8', name: 'Roti Bakar (Cokelat/Keju)', category: 'Snacks', kdsGroup: 'Snack', price: 18000 },
+            { id: 'sn9', name: 'Snack Mix', category: 'Snacks', kdsGroup: 'Snack', price: 20000 },
+            { id: 'sn10', name: 'Dimsum Mentai', category: 'Snacks', kdsGroup: 'Snack', price: 20000 },
+            { id: 'mn1', name: 'Nasi Goreng Hongkong', category: 'Mains', kdsGroup: 'Makanan', price: 22000 },
+            { id: 'mn2', name: 'Nasi Goreng Zepöör', category: 'Mains', kdsGroup: 'Makanan', price: 25000 },
+            { id: 'mn3', name: 'Bakmie Goreng', category: 'Mains', kdsGroup: 'Makanan', price: 22000 },
+            { id: 'mn4', name: 'Nasi Ayam Geprek', category: 'Mains', kdsGroup: 'Makanan', price: 25000 },
+            { id: 'mn5', name: 'Nasi Chicken Karaage', category: 'Mains', kdsGroup: 'Makanan', price: 25000 },
+        ];
+
+        let currentCart = [];
+        let allOrders = [];
+        let activeCategory = 'all';
+        let searchQuery = '';
+
+        window.showModal = function(title, message, type = 'info', onOk = null) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const msgEl = document.getElementById('modal-message');
+            const iconEl = document.getElementById('modal-icon');
+            const btnOk = document.getElementById('modal-btn-ok');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (type === 'success') {
+                iconEl.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl bg-emerald-100 text-emerald-600';
+                iconEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+                btnOk.className = 'w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-md';
+            } else if (type === 'error') {
+                iconEl.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl bg-rose-100 text-rose-600';
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                btnOk.className = 'w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition shadow-md';
+            } else {
+                iconEl.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl bg-amber-100 text-amber-600';
+                iconEl.innerHTML = '<i class="fa-solid fa-info"></i>';
+                btnOk.className = 'w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition shadow-md';
+            }
+
+            modal.classList.remove('hidden');
+            const newBtn = btnOk.cloneNode(true);
+            btnOk.parentNode.replaceChild(newBtn, btnOk);
+            newBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                if (onOk) onOk();
+            });
+        };
+
+        window.formatIDR = function(num) {
+            return 'Rp ' + num.toLocaleString('id-ID');
+        };
+
+        async function initFirebaseAndApp() {
+            try {
+                if (firebaseConfig.projectId) {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    document.getElementById('sync-status-text').textContent = 'Firebase Cloud Sync Aktif';
+                } else {
+                    document.getElementById('sync-status-text').textContent = 'Local Sync Aktif';
+                }
+            } catch (err) {
+                console.warn("Firebase fallback mode active:", err);
+                document.getElementById('sync-status-text').textContent = 'Hybrid Sync Aktif';
+            }
+
+            checkSessionAndStart();
+        }
+
+        function checkSessionAndStart() {
+            const savedSession = localStorage.getItem('cafe_zepoor_session');
+            if (savedSession) {
+                try {
+                    currentUser = JSON.parse(savedSession);
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    applyUserStation();
+                    startRealtimeSync();
+                } catch (e) {
+                    localStorage.removeItem('cafe_zepoor_session');
+                    showAuthScreen();
+                }
+            } else {
+                showAuthScreen();
+            }
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.role-btn').forEach(b => {
+                    b.classList.remove('border-amber-500', 'bg-amber-50', 'text-amber-800');
+                    b.classList.add('border-stone-200', 'bg-white', 'text-stone-600');
+                });
+                btn.classList.remove('border-stone-200', 'bg-white', 'text-stone-600');
+                btn.classList.add('border-amber-500', 'bg-amber-50', 'text-amber-800');
+            });
+        });
+        document.querySelector('.role-btn[data-role="Kasir"]').click();
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const selectedRoleBtn = document.querySelector('.role-btn.border-amber-500');
+            const role = selectedRoleBtn ? selectedRoleBtn.dataset.role : 'Kasir';
+            const name = document.getElementById('login-name').value.trim();
+            const pin = document.getElementById('login-pin').value.trim();
+
+            let validPin = false;
+            if (role === 'Kasir' && (pin === '1234' || pin === '0000')) validPin = true;
+            if (role === 'Server' && (pin === '5678' || pin === '0000')) validPin = true;
+            if (role === 'Admin' && pin === '0000') validPin = true;
+
+            if (!validPin && pin !== '0000') {
+                showModal('PIN Salah', 'PIN salah. Gunakan 1234 (Kasir), 5678 (Server), atau 0000 (Admin).', 'error');
+                return;
+            }
+
+            currentUser = { role, name };
+            localStorage.setItem('cafe_zepoor_session', JSON.stringify(currentUser));
+            document.getElementById('auth-screen').classList.add('hidden');
+            applyUserStation();
+            startRealtimeSync();
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if (ordersUnsubscribe) ordersUnsubscribe();
+            localStorage.removeItem('cafe_zepoor_session');
+            location.reload();
+        });
+
+        function applyUserStation() {
+            document.getElementById('header-role-badge').textContent = currentUser.role;
+            document.getElementById('header-user-name').textContent = currentUser.name;
+
+            document.querySelectorAll('.station-view').forEach(el => el.classList.add('hidden'));
+
+            if (currentUser.role === 'Kasir') {
+                document.getElementById('station-kasir').classList.remove('hidden');
+                renderMenuCatalog();
+            } else if (currentUser.role === 'Server') {
+                document.getElementById('station-server').classList.remove('hidden');
+            } else if (currentUser.role === 'Admin') {
+                document.getElementById('station-admin').classList.remove('hidden');
+                renderAdminDashboard();
+            }
+        }
+
+        function renderMenuCatalog() {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+
+            const filtered = MENU_DATA.filter(item => {
+                const matchCat = activeCategory === 'all' || item.category === activeCategory;
+                const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-stone-400">Menu tidak ditemukan</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl p-3 border border-stone-200 shadow-sm hover:border-amber-400 hover:shadow-md transition cursor-pointer flex flex-col justify-between group';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-stone-100 text-stone-600 rounded-md">${item.category}</span>
+                            <span class="text-xs font-bold text-amber-600">${formatIDR(item.price)}</span>
+                        </div>
+                        <h4 class="font-bold text-stone-900 text-sm group-hover:text-amber-700 transition">${item.name}</h4>
+                    </div>
+                    <button class="mt-3 w-full py-2 bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Tambah
+                    </button>
+                `;
+                card.addEventListener('click', () => addToCart(item));
+                grid.appendChild(card);
+            });
+        }
+
+        document.querySelectorAll('.cat-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.cat-tab').forEach(t => {
+                    t.className = 'cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition shrink-0';
+                });
+                tab.className = 'cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white shadow-sm transition shrink-0';
+                activeCategory = tab.dataset.cat;
+                renderMenuCatalog();
+            });
+        });
+
+        document.getElementById('menu-search').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderMenuCatalog();
+        });
+
+        function addToCart(item) {
+            const existing = currentCart.find(i => i.id === item.id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                currentCart.push({ ...item, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const totalEl = document.getElementById('cart-total');
+            const sendBtn = document.getElementById('send-order-btn');
+
+            if (currentCart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-stone-400">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 block"></i>
+                        <p class="text-sm">Keranjang masih kosong</p>
+                    </div>
+                `;
+                subtotalEl.textContent = 'Rp 0';
+                totalEl.textContent = 'Rp 0';
+                sendBtn.disabled = true;
+                return;
+            }
+
+            container.innerHTML = '';
+            let subtotal = 0;
+
+            currentCart.forEach((item, index) => {
+                subtotal += item.price * item.qty;
+                const row = document.createElement('div');
+                row.className = 'py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0';
+                row.innerHTML = `
+                    <div class="flex-1">
+                        <h5 class="font-bold text-stone-900 text-sm">${item.name}</h5>
+                        <p class="text-xs text-stone-500">${formatIDR(item.price)} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center text-xs font-bold transition decrease-qty" data-index="${index}">-</button>
+                        <span class="text-sm font-bold w-5 text-center">${item.qty}</span>
+                        <button class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center text-xs font-bold transition increase-qty" data-index="${index}">+</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            subtotalEl.textContent = formatIDR(subtotal);
+            totalEl.textContent = formatIDR(subtotal);
+            sendBtn.disabled = false;
+
+            container.querySelectorAll('.increase-qty').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentCart[e.currentTarget.dataset.index].qty++;
+                    renderCart();
+                });
+            });
+
+            container.querySelectorAll('.decrease-qty').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = e.currentTarget.dataset.index;
+                    currentCart[idx].qty--;
+                    if (currentCart[idx].qty <= 0) currentCart.splice(idx, 1);
+                    renderCart();
+                });
+            });
+        }
+
+        document.getElementById('clear-cart-btn').addEventListener('click', () => {
+            currentCart = [];
+            renderCart();
+        });
+
+        // Send Order
+        document.getElementById('send-order-btn').addEventListener('click', async () => {
+            if (currentCart.length === 0) return;
+
+            const tableNumber = document.getElementById('order-table').value;
+            const customerName = document.getElementById('order-customer').value.trim() || 'Tamu';
+            const total = currentCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const orderId = 'ord_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+
+            const newOrder = {
+                id: orderId,
+                tableNumber,
+                customerName,
+                cashierName: currentUser.name,
+                items: JSON.parse(JSON.stringify(currentCart)),
+                total,
+                status: 'pending',
+                createdAt: Date.now()
+            };
+
+            const sendBtn = document.getElementById('send-order-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Mengirim...';
+
+            try {
+                // Save locally & broadcast instantly across same browser tabs / devices
+                saveAndBroadcastNewOrder(newOrder);
+
+                if (db) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders_col', orderId), newOrder);
+                }
+
+                showModal('Pesanan Terkirim!', `Pesanan ${customerName} (${tableNumber}) berhasil dikirim ke KDS.`, 'success', () => {
+                    currentCart = [];
+                    document.getElementById('order-customer').value = '';
+                    renderCart();
+                });
+            } catch (err) {
+                console.error("Error sending order:", err);
+                showModal('Berhasil', 'Pesanan berhasil dicatat di sistem lokal.', 'success', () => {
+                    currentCart = [];
+                    renderCart();
+                });
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Pesanan ke KDS & Dapur';
+            }
+        });
+
+        function saveAndBroadcastNewOrder(order) {
+            let localOrders = JSON.parse(localStorage.getItem('zepoor_all_orders') || '[]');
+            const existingIdx = localOrders.findIndex(o => o.id === order.id);
+            if (existingIdx !== -1) {
+                localOrders[existingIdx] = order;
+            } else {
+                localOrders.push(order);
+            }
+            localStorage.setItem('zepoor_all_orders', JSON.stringify(localOrders));
+            broadcastChannel.postMessage({ type: 'UPDATE_ORDERS', orders: localOrders });
+            handleOrdersUpdate(localOrders);
+        }
+
+        function startRealtimeSync() {
+            // Initial load from localStorage
+            const initialLocal = JSON.parse(localStorage.getItem('zepoor_all_orders') || '[]');
+            handleOrdersUpdate(initialLocal);
+
+            // BroadcastChannel for instant cross-tab / local multi-device sync
+            broadcastChannel.onmessage = (event) => {
+                if (event.data && event.data.type === 'UPDATE_ORDERS') {
+                    handleOrdersUpdate(event.data.orders);
+                }
+            };
+
+            // Poll localStorage every 1.5s as secondary fallback for distinct browser/device sessions
+            setInterval(() => {
+                const polled = JSON.parse(localStorage.getItem('zepoor_all_orders') || '[]');
+                if (polled.length !== allOrders.length || JSON.stringify(polled) !== JSON.stringify(allOrders)) {
+                    handleOrdersUpdate(polled);
+                }
+            }, 1500);
+
+            // Firebase Firestore listener if connected
+            if (db) {
+                try {
+                    const q = collection(db, 'artifacts', appId, 'public', 'data', 'orders_col');
+                    ordersUnsubscribe = onSnapshot(q, (snapshot) => {
+                        let fetched = [];
+                        snapshot.forEach(docSnap => {
+                            fetched.push(docSnap.data());
+                        });
+                        if (fetched.length > 0) {
+                            localStorage.setItem('zepoor_all_orders', JSON.stringify(fetched));
+                            handleOrdersUpdate(fetched);
+                        }
+                    });
+                } catch (e) {
+                    console.log("Using local multi-device sync fallback.");
+                }
+            }
+        }
+
+        function handleOrdersUpdate(orders) {
+            allOrders = orders.sort((a, b) => a.createdAt - b.createdAt);
+            if (currentUser && currentUser.role === 'Server') renderKDS();
+            if (currentUser && currentUser.role === 'Admin') renderAdminDashboard();
+        }
+
+        function renderKDS() {
+            const minumanList = document.getElementById('kds-minuman-list');
+            const snackList = document.getElementById('kds-snack-list');
+            const makananList = document.getElementById('kds-makanan-list');
+
+            minumanList.innerHTML = '';
+            snackList.innerHTML = '';
+            makananList.innerHTML = '';
+
+            let countMinuman = 0, countSnack = 0, countMakanan = 0, totalActive = 0;
+
+            allOrders.forEach(order => {
+                if (order.status === 'completed') return;
+                totalActive++;
+
+                const minumanItems = order.items.filter(i => i.kdsGroup === 'Minuman');
+                const snackItems = order.items.filter(i => i.kdsGroup === 'Snack');
+                const makananItems = order.items.filter(i => i.kdsGroup === 'Makanan');
+                const timeStr = new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                if (minumanItems.length > 0) {
+                    countMinuman++;
+                    minumanList.appendChild(createKDSCard(order, minumanItems, timeStr));
+                }
+                if (snackItems.length > 0) {
+                    countSnack++;
+                    snackList.appendChild(createKDSCard(order, snackItems, timeStr));
+                }
+                if (makananItems.length > 0) {
+                    countMakanan++;
+                    makananList.appendChild(createKDSCard(order, makananItems, timeStr));
+                }
+            });
+
+            document.getElementById('count-minuman').textContent = countMinuman;
+            document.getElementById('count-snack').textContent = countSnack;
+            document.getElementById('count-makanan').textContent = countMakanan;
+            document.getElementById('kds-active-count').textContent = `${totalActive} Pesanan Aktif`;
+
+            if (minumanList.children.length === 0) minumanList.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Tidak ada minuman aktif</div>`;
+            if (snackList.children.length === 0) snackList.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Tidak ada snack aktif</div>`;
+            if (makananList.children.length === 0) makananList.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Tidak ada makanan aktif</div>`;
+        }
+
+        function createKDSCard(order, items, timeStr) {
+            const card = document.createElement('div');
+            card.className = `bg-white rounded-xl p-3.5 border shadow-sm transition ${order.status === 'processing' ? 'border-amber-400 bg-amber-50/20' : 'border-stone-200'}`;
+            
+            let itemsHtml = items.map(i => `<li class="flex justify-between text-xs py-1 border-b border-stone-100 last:border-0"><span class="font-bold text-stone-900">${i.name}</span><span class="bg-stone-100 px-1.5 py-0.5 rounded font-bold text-stone-700">x${i.qty}</span></li>`).join('');
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded">${order.tableNumber}</span>
+                        <h4 class="font-bold text-stone-900 text-sm mt-1">${order.customerName}</h4>
+                    </div>
+                    <span class="text-[11px] text-stone-400"><i class="fa-regular fa-clock"></i> ${timeStr}</span>
+                </div>
+                <ul class="mb-3 divide-y divide-stone-100">${itemsHtml}</ul>
+                <div class="flex items-center gap-2">
+                    ${order.status === 'pending' ? `
+                        <button data-id="${order.id}" class="kds-process-btn flex-1 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-xs transition shadow-sm">
+                            <i class="fa-solid fa-fire mr-1"></i> Proses
+                        </button>
+                    ` : ''}
+                    <button data-id="${order.id}" class="kds-done-btn flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition shadow-sm">
+                        <i class="fa-solid fa-check mr-1"></i> Selesai
+                    </button>
+                </div>
+            `;
+
+            card.querySelector('.kds-done-btn').addEventListener('click', () => updateOrderStatus(order.id, 'completed'));
+            const procBtn = card.querySelector('.kds-process-btn');
+            if (procBtn) {
+                procBtn.addEventListener('click', () => updateOrderStatus(order.id, 'processing'));
+            }
+
+            return card;
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            const idx = allOrders.findIndex(o => o.id === orderId);
+            if (idx !== -1) {
+                allOrders[idx].status = newStatus;
+                localStorage.setItem('zepoor_all_orders', JSON.stringify(allOrders));
+                broadcastChannel.postMessage({ type: 'UPDATE_ORDERS', orders: allOrders });
+                handleOrdersUpdate(allOrders);
+
+                if (db) {
+                    try {
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders_col', orderId), allOrders[idx]);
+                    } catch (e) {
+                        console.log("Cloud sync status update fallback.");
+                    }
+                }
+            }
+        }
+
+        function renderAdminDashboard() {
+            let totalRevenue = 0;
+            let totalCompletedOrders = 0;
+            let activeOrdersCount = 0;
+            const productRecap = {};
+
+            MENU_DATA.forEach(m => {
+                productRecap[m.name] = { category: m.category, qty: 0, revenue: 0 };
+            });
+
+            allOrders.forEach(order => {
+                if (order.status === 'completed') {
+                    totalCompletedOrders++;
+                    totalRevenue += order.total;
+                } else {
+                    activeOrdersCount++;
+                }
+
+                order.items.forEach(item => {
+                    if (productRecap[item.name]) {
+                        productRecap[item.name].qty += item.qty;
+                        productRecap[item.name].revenue += item.price * item.qty;
+                    } else {
+                        productRecap[item.name] = { category: item.category || 'Lainnya', qty: item.qty, revenue: item.price * item.qty };
+                    }
+                });
+            });
+
+            document.getElementById('admin-total-revenue').textContent = formatIDR(totalRevenue);
+            document.getElementById('admin-total-orders').textContent = totalCompletedOrders;
+            document.getElementById('admin-active-orders').textContent = activeOrdersCount;
+
+            const tbody = document.getElementById('admin-product-recap-tbody');
+            tbody.innerHTML = '';
+
+            const sortedProducts = Object.keys(productRecap).map(name => ({
+                name,
+                ...productRecap[name]
+            })).sort((a, b) => b.qty - a.qty);
+
+            if (sortedProducts.length === 0 || sortedProducts.every(p => p.qty === 0)) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-stone-400">Belum ada penjualan tercatat hari ini.</td></tr>`;
+                return;
+            }
+
+            sortedProducts.forEach(prod => {
+                if (prod.qty > 0) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-stone-50 transition';
+                    tr.innerHTML = `
+                        <td class="p-4 font-bold text-stone-900">${prod.name}</td>
+                        <td class="p-4"><span class="px-2 py-0.5 bg-stone-100 text-stone-600 rounded text-xs font-semibold">${prod.category}</span></td>
+                        <td class="p-4 text-center font-bold text-amber-700">${prod.qty}</td>
+                        <td class="p-4 text-right font-bold text-stone-900">${formatIDR(prod.revenue)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        document.getElementById('admin-refresh-btn').addEventListener('click', () => {
+            renderAdminDashboard();
+            showModal('Diperbarui', 'Data rekap admin berhasil diperbarui.', 'success');
+        });
+
+        window.onload = function() {
+            initFirebaseAndApp();
+        };
+    </script>
+</body>
+</html>
